@@ -1,0 +1,403 @@
+# Registry of GIS layers to pull for Jackson County, MO.
+#
+# Each [layers.<name>] entry:
+#   url    ArcGIS REST layer URL (…/MapServer/<id> or …/FeatureServer/<id>)
+#   source "jackson" or "marc" (keys into [servers])
+#   title  display name
+#   where  optional SQL filter applied server-side (default "1=1")
+#   clip   true to keep only features intersecting the county boundary
+#   large  true to skip in `kcgis fetch` unless named explicitly
+#   simplify  optional server-side generalization tolerance in degrees (0.00005 ≈ 5 m)
+#   fields comma-separated outFields (default "*"); use it to leave out personal data
+#   clip   may also name another polygon layer to clip to, e.g. clip = "br_watershed"
+#   group  key into [groups] to show the layer under a themed heading in the viewer
+#   kind   "arcgis" (default) or "usgs_gauges" (active USGS gauges inside the `clip` layer, latest readings)
+#   color  hex color used by the web viewer and static maps
+#
+# Discover more layers with: kcgis catalog jackson | kcgis catalog marc
+
+[county]
+name = "Jackson County, MO"
+fips = "29095"
+# Layer whose geometry is used for `clip = true`
+boundary_layer = "county_boundary"
+
+[servers.jackson]
+title = "Jackson County, MO GIS"
+root = "https://jcgis.jacksongov.org/arcgis/rest/services"
+homepage = "https://www.jacksongov.org/Government/Departments/Geographic-Information-Systems"
+
+[servers.marc]
+title = "Mid-America Regional Council (MARC)"
+root = "https://gis2.marc2.org/arcgis/rest/services"
+homepage = "https://www.marc.org/data-and-maps"
+
+[servers.kcmo]
+title = "City of Kansas City, MO"
+root = "https://services.arcgis.com/4o5uMWTHuOhUVJPd/arcgis/rest/services"
+homepage = "https://kcmo.maps.arcgis.com"
+
+[servers.usgs]
+title = "U.S. Geological Survey"
+root = "https://hydro.nationalmap.gov/arcgis/rest/services"
+homepage = "https://waterdata.usgs.gov"
+
+# --- Themed groups ----------------------------------------------------------
+
+[groups.blue_river]
+title = "Blue River"
+description = "Jackson County's Blue River Parkway Master Plan (adopted Dec 5, 2022) and Kansas City's Blue River restoration and capital projects."
+zoom_layer = "br_watershed"
+documents = [
+  { title = "Blue River Parkway Master Plan (Jackson County, 2022)", url = "https://www.makeyourdayhere.com/files/assets/parksrec/v/1/parks/documents/jcpr_brp_masterplan.pdf" },
+  { title = "Master Plan appendices", url = "https://www.makeyourdayhere.com/files/assets/parksrec/v/1/parks/documents/jcpr_brp_masterplan-appendix-sm-file-size.pdf" },
+  { title = "Resolution 21107 adopting the plan", url = "https://www.makeyourdayhere.com/files/assets/parksrec/v/1/i-want-to/documents/blue-river-parkway-master-plan-resolution-21107_adopted-dec-5-2022.pdf" },
+  { title = "Blue River Parkway map (2022)", url = "https://www.makeyourdayhere.com/files/assets/parksrec/v/1/facilities/documents/blue-river-parkway-map-2022.pdf" },
+  { title = "Master planning page", url = "https://www.makeyourdayhere.com/Home/Featured-Content-2/Blue-River-Parkway-Master-Planning" },
+  { title = "KCMO Blue River Projects map", url = "https://experience.arcgis.com/experience/da4be96b50014965aeab1fe1406cc18e" },
+  { title = "KCMO Blue River Greenway StoryMap", url = "https://storymaps.arcgis.com/stories/46f956c41a234b6bad598a56417899e4" },
+]
+
+# --- Jackson County --------------------------------------------------------
+
+[layers.county_boundary]
+source = "jackson"
+title = "County Boundary"
+url = "https://jcgis.jacksongov.org/arcgis/rest/services/ParcelViewer/CountyBoundary/FeatureServer/0"
+color = "#222222"
+
+[layers.cities]
+source = "jackson"
+title = "City Boundaries"
+url = "https://jcgis.jacksongov.org/arcgis/rest/services/ParcelViewer/CityAndDistrict_Layers/MapServer/0"
+color = "#7b3294"
+
+[layers.school_districts]
+source = "jackson"
+title = "School Districts"
+url = "https://jcgis.jacksongov.org/arcgis/rest/services/ParcelViewer/CityAndDistrict_Layers/MapServer/1"
+color = "#e66101"
+
+[layers.fire_districts]
+source = "jackson"
+title = "Fire Districts"
+url = "https://jcgis.jacksongov.org/arcgis/rest/services/ParcelViewer/CityAndDistrict_Layers/MapServer/2"
+color = "#d7191c"
+
+[layers.water_districts]
+source = "jackson"
+title = "Water Districts"
+url = "https://jcgis.jacksongov.org/arcgis/rest/services/ParcelViewer/CityAndDistrict_Layers/MapServer/3"
+color = "#2c7bb6"
+
+[layers.library_districts]
+source = "jackson"
+title = "Library Districts"
+url = "https://jcgis.jacksongov.org/arcgis/rest/services/ParcelViewer/CityAndDistrict_Layers/MapServer/4"
+color = "#5e3c99"
+
+[layers.legislative_districts]
+source = "jackson"
+title = "County Legislative Districts"
+url = "https://jcgis.jacksongov.org/arcgis/rest/services/ElectionAdministration/LegislativeDistricts/MapServer/1"
+color = "#008837"
+
+[layers.unincorporated_zoning]
+source = "jackson"
+title = "Unincorporated Zoning"
+url = "https://jcgis.jacksongov.org/arcgis/rest/services/ParcelViewer/UnincorporatedZoning/MapServer/0"
+color = "#a6611a"
+
+[layers.tif_districts]
+source = "jackson"
+title = "TIF Plan Districts"
+url = "https://jcgis.jacksongov.org/arcgis/rest/services/ParcelViewer/Econ_Development_Layers/MapServer/0"
+color = "#f1b6da"
+
+[layers.tif_projects]
+source = "jackson"
+title = "TIF Projects"
+url = "https://jcgis.jacksongov.org/arcgis/rest/services/ParcelViewer/Econ_Development_Layers/MapServer/1"
+color = "#d01c8b"
+
+[layers.cid_districts]
+source = "jackson"
+title = "Community Improvement Districts"
+url = "https://jcgis.jacksongov.org/arcgis/rest/services/ParcelViewer/Econ_Development_Layers/MapServer/2"
+color = "#4dac26"
+
+[layers.tdd_districts]
+source = "jackson"
+title = "Transportation Development Districts"
+url = "https://jcgis.jacksongov.org/arcgis/rest/services/ParcelViewer/Econ_Development_Layers/MapServer/3"
+color = "#b8e186"
+
+[layers.neighborhoods]
+source = "jackson"
+title = "Appraisal Neighborhoods"
+url = "https://jcgis.jacksongov.org/arcgis/rest/services/Neighborhoods/MapServer/0"
+simplify = 0.00005  # assessor neighborhoods traced from parcels; ~1.6M vertices raw
+color = "#636363"
+
+[layers.parcels]
+source = "jackson"
+title = "Parcels"
+url = "https://jcgis.jacksongov.org/arcgis/rest/services/ParcelViewer/ParcelsAscendRelate/FeatureServer/1"
+large = true  # ~311k features
+color = "#999999"
+
+# --- MARC (regional; filtered to Jackson County) ---------------------------
+
+[layers.tracts_2020]
+source = "marc"
+title = "Census Tracts 2020"
+url = "https://gis2.marc2.org/arcgis/rest/services/Census/Tracts2020/MapServer/0"
+where = "CountyFIPS = '29095'"
+color = "#878787"
+
+[layers.forecast_2050_tracts]
+source = "marc"
+title = "2050 Forecast by Tract"
+url = "https://gis2.marc2.org/arcgis/rest/services/LandUseDevelopment/Forecast2050/MapServer/1"
+where = "CountyFIPS = '29095'"
+color = "#e08214"
+
+[layers.parks]
+source = "marc"
+title = "Parks"
+url = "https://gis2.marc2.org/arcgis/rest/services/Environment/Parks/MapServer/0"
+clip = true
+color = "#1a9641"
+
+[layers.trails_bikeways]
+source = "marc"
+title = "Trails & Bikeways"
+url = "https://gis2.marc2.org/arcgis/rest/services/Recreation/Trails_and_Bikeways/MapServer/0"
+clip = true
+color = "#a6d96a"
+
+[layers.streams]
+source = "marc"
+title = "Streams"
+url = "https://gis2.marc2.org/arcgis/rest/services/Environment/Streams/MapServer/0"
+clip = true
+color = "#4393c3"
+
+[layers.flood_zones]
+source = "marc"
+title = "Flood Hazard Zones"
+url = "https://gis2.marc2.org/arcgis/rest/services/Environment/FloodZones/MapServer/0"
+clip = true
+simplify = 0.00002
+color = "#92c5de"
+
+[layers.schools]
+source = "marc"
+title = "Schools"
+url = "https://gis2.marc2.org/arcgis/rest/services/Education/Schools/MapServer/0"
+clip = true
+color = "#fdae61"
+
+[layers.libraries]
+source = "marc"
+title = "Libraries"
+url = "https://gis2.marc2.org/arcgis/rest/services/Education/Libraries/MapServer/0"
+clip = true
+color = "#8073ac"
+
+[layers.hospitals]
+source = "marc"
+title = "Hospitals"
+url = "https://gis2.marc2.org/arcgis/rest/services/PublicSafety/Hospitals/MapServer/0"
+clip = true
+color = "#ca0020"
+
+[layers.fire_stations]
+source = "marc"
+title = "Fire Stations & EMS"
+url = "https://gis2.marc2.org/arcgis/rest/services/PublicSafety/FireStations/MapServer/0"
+clip = true
+color = "#f4a582"
+
+[layers.police_stations]
+source = "marc"
+title = "Police Stations"
+url = "https://gis2.marc2.org/arcgis/rest/services/PublicSafety/PoliceStations/MapServer/0"
+clip = true
+color = "#0571b0"
+
+[layers.transit_routes]
+source = "marc"
+title = "Transit Routes"
+url = "https://gis2.marc2.org/arcgis/rest/services/Transportation/TransitRoutes/MapServer/0"
+clip = true
+color = "#2166ac"
+
+[layers.transit_stops]
+source = "marc"
+title = "Transit Stops"
+url = "https://gis2.marc2.org/arcgis/rest/services/Transportation/TransitStops/MapServer/0"
+clip = true
+color = "#053061"
+
+[layers.development_projects]
+source = "marc"
+title = "Development Projects 2024–26"
+url = "https://gis2.marc2.org/arcgis/rest/services/LandUseDevelopment/DevelopmentProjects_2020_2025/MapServer/1"
+clip = true
+color = "#b2182b"
+
+# --- Blue River (county Parkway Master Plan + KCMO restoration) -------------
+
+[layers.br_watershed]
+source = "marc"
+group = "blue_river"
+title = "Blue River Watershed"
+url = "https://gis2.marc2.org/arcgis/rest/services/Environment/Watersheds/MapServer/0"
+where = "Name = 'Blue River'"
+color = "#08519c"
+
+[layers.br_subwatersheds]
+source = "usgs"
+group = "blue_river"
+title = "Sub-watersheds (HUC12)"
+url = "https://hydro.nationalmap.gov/arcgis/rest/services/wbd/MapServer/6"
+where = "huc12 LIKE '1030010101%'"
+fields = "huc12,name,areaacres,states,tohuc"
+color = "#6baed6"
+
+[layers.br_river]
+source = "marc"
+group = "blue_river"
+title = "Blue River"
+url = "https://gis2.marc2.org/arcgis/rest/services/Environment/Streams/MapServer/0"
+where = "StreamName IN ('Big Blue River', 'Old Big Blue River Channel')"
+color = "#2171b5"
+
+[layers.br_stream_health]
+source = "marc"
+group = "blue_river"
+title = "Stream Health (2016)"
+url = "https://gis2.marc2.org/arcgis/rest/services/Environment/StreamHealth/MapServer/0"
+clip = "br_watershed"
+color = "#41ab5d"
+
+[layers.br_gauges]
+source = "usgs"
+group = "blue_river"
+kind = "usgs_gauges"
+title = "USGS Stream Gauges (latest reading)"
+url = "https://api.waterdata.usgs.gov/ogcapi/v1/collections"
+clip = "br_watershed"
+color = "#e31a1c"
+
+[layers.br_parkway]
+source = "marc"
+group = "blue_river"
+title = "Blue River Parkway (county park)"
+url = "https://gis2.marc2.org/arcgis/rest/services/Environment/Parks/MapServer/0"
+where = "Name = 'Blue River Parkway' AND AgencyName = 'Jackson County'"
+color = "#238b45"
+
+[layers.br_parkway_trails]
+source = "marc"
+group = "blue_river"
+title = "Parkway & Blue River Trails"
+url = "https://gis2.marc2.org/arcgis/rest/services/Recreation/Trails_and_Bikeways/MapServer/0"
+where = "State = 'MO' AND (ParkName = 'Blue River Parkway' OR RouteName LIKE '%Blue River%')"
+color = "#8c510a"
+
+[layers.br_greenway]
+source = "marc"
+group = "blue_river"
+title = "Blue River Greenway (MetroGreen, existing + planned)"
+url = "https://gis2.marc2.org/arcgis/rest/services/Recreation/Metrogreen_Corridors/MapServer/0"
+where = "Name IN ('Big Blue River Grnwy', 'Blue River Grnwy')"
+color = "#dfc27d"
+
+[layers.br_restoration_areas]
+source = "kcmo"
+group = "blue_river"
+title = "KCMO ARPA Restoration Areas"
+url = "https://services.arcgis.com/4o5uMWTHuOhUVJPd/arcgis/rest/services/Blue_River_ARPA_Restoration_Areas/FeatureServer/1"
+fields = "OBJECTID,Name"
+color = "#ff7f00"
+
+[layers.br_corridor_buffer]
+source = "kcmo"
+group = "blue_river"
+title = "KCMO Blue River ½-mile Corridor"
+url = "https://services.arcgis.com/4o5uMWTHuOhUVJPd/arcgis/rest/services/Blue_River_Projects_WFL1/FeatureServer/3"
+color = "#9ecae1"
+
+[layers.br_kcmo_trail]
+source = "kcmo"
+group = "blue_river"
+title = "KCMO Blue River Trail"
+url = "https://services.arcgis.com/4o5uMWTHuOhUVJPd/arcgis/rest/services/Blue_River_Projects_WFL1/FeatureServer/2"
+color = "#a6611a"
+
+[layers.br_brownfields]
+source = "kcmo"
+group = "blue_river"
+title = "KCMO Brownfields"
+url = "https://services.arcgis.com/4o5uMWTHuOhUVJPd/arcgis/rest/services/Blue_River_Projects_WFL1/FeatureServer/0"
+color = "#67000d"
+
+# Capital projects; contact name/email/phone fields left out.
+[layers.br_cip_public_works]
+source = "kcmo"
+group = "blue_river"
+title = "KCMO Public Works Projects"
+url = "https://services.arcgis.com/4o5uMWTHuOhUVJPd/arcgis/rest/services/Blue_River_Projects_WFL1/FeatureServer/4"
+fields = "OBJECTID,PROJECTID,PROJECTNAME,PROJECTSTATUS,CURRENTPHASE,PROJECTTYPE,PROJECTSCOPE,TOTALBUDGET,BUDGETSOURCE,DEPARTMENT,PROJECTSTARTDATE,PROJECTENDDATE,CONSTRUCTIONSTARTDATE,CONSTRUCTIONENDDATE,PROJECTLOCATION,COUNCILDISTRICT,PROJECTLINK"
+color = "#6a51a3"
+
+[layers.br_cip_parks]
+source = "kcmo"
+group = "blue_river"
+title = "KCMO Parks Projects"
+url = "https://services.arcgis.com/4o5uMWTHuOhUVJPd/arcgis/rest/services/Blue_River_Projects_WFL1/FeatureServer/5"
+fields = "OBJECTID,PROJECTID,PROJECTNAME,PROJECTSTATUS,CURRENTPHASE,PROJECTTYPE,PROJECTSCOPE,TOTALBUDGET,BUDGETSOURCE,DEPARTMENT,PROJECTSTARTDATE,PROJECTENDDATE,CONSTRUCTIONSTARTDATE,CONSTRUCTIONENDDATE,PROJECTLOCATION,COUNCILDISTRICT,PROJECTLINK"
+color = "#1b7837"
+
+[layers.br_cip_kc_water]
+source = "kcmo"
+group = "blue_river"
+title = "KC Water Projects"
+url = "https://services.arcgis.com/4o5uMWTHuOhUVJPd/arcgis/rest/services/Blue_River_Projects_WFL1/FeatureServer/6"
+fields = "OBJECTID,PROJECTID,PROJECTNAME,PROJECTSTATUS,CURRENTPHASE,PROJECTTYPE,PROJECTSCOPE,TOTALBUDGET,BUDGETSOURCE,DEPARTMENT,PROJECTSTARTDATE,PROJECTENDDATE,CONSTRUCTIONSTARTDATE,CONSTRUCTIONENDDATE,PROJECTLOCATION,COUNCILDISTRICT,PROJECTLINK"
+color = "#0570b0"
+
+[layers.br_stream_setbacks]
+source = "kcmo"
+group = "blue_river"
+title = "KCMO Stream Setback Zones"
+url = "https://services.arcgis.com/4o5uMWTHuOhUVJPd/arcgis/rest/services/KCP_RegulatedStreamsBuffer/FeatureServer/0"
+clip = "br_watershed"
+color = "#c6dbef"
+
+# Parcels near the river. Private parcels: no owner name/address fields.
+[layers.br_public_parcels]
+source = "kcmo"
+group = "blue_river"
+title = "Public Parcels near the River"
+url = "https://services.arcgis.com/4o5uMWTHuOhUVJPd/arcgis/rest/services/Blue_River_Parcels_V3_WFL1/FeatureServer/9"
+fields = "OBJECTID,PARCELTYPE,KIVAPIN,APN,OWN_NAME,ADDRESS,LANDUSECODE,Area_acres"
+color = "#74c476"
+
+[layers.br_landbank_parcels]
+source = "kcmo"
+group = "blue_river"
+title = "Land Bank Parcels near the River"
+url = "https://services.arcgis.com/4o5uMWTHuOhUVJPd/arcgis/rest/services/Blue_River_Parcels_V3_WFL1/FeatureServer/3"
+fields = "OBJECTID,PARCELTYPE,KIVAPIN,APN,OWN_NAME,ADDRESS,LANDUSECODE,Area_acres"
+color = "#fd8d3c"
+
+[layers.br_private_parcels]
+source = "kcmo"
+group = "blue_river"
+title = "Private Parcels near the River"
+url = "https://services.arcgis.com/4o5uMWTHuOhUVJPd/arcgis/rest/services/Blue_River_Parcels_V3_WFL1/FeatureServer/2"
+fields = "OBJECTID,PARCELTYPE,KIVAPIN,APN,LANDUSECODE,Area_acres"
+color = "#bdbdbd"

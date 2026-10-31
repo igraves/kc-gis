@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Node
+web/node_modules/
+web/dist/
+
+# Fetched data and rendered maps (regenerate with `kcgis fetch` / `kcgis map`)
+data/*
+!data/.gitkeep
+maps/
+
+.DS_Store

@@ -1,0 +1,31 @@
+[project]
+name = "kcgis"
+version = "0.1.0"
+description = "Fetch, track, and map Jackson County, MO GIS data from Jackson County and MARC ArcGIS services"
+readme = "README.md"
+license = "AGPL-3.0-or-later"
+requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+maps = [
+    "geopandas>=1.0",
+    "matplotlib>=3.8",
+]
+
+[project.scripts]
+kcgis = "kcgis.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
