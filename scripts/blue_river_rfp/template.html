@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blue River Road Surplus Parcels</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>__MAPLIBRE_CSS__</style>
+<style>
+/* Layout: a fixed briefing column beside a full-height map of the parcels and their surroundings. */
+:root {
+  --paper: #f4f5f1;
+  --panel: #fbfbf9;
+  --ink: #1d2420;
+  --muted: #5d6862;
+  --line: #d9ddd6;
+  --accent: #c2410c;
+  --accent-soft: #fbe3d6;
+  --map-bg: #eef0ea;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #141816; --panel: #1a1f1c; --ink: #e6ebe7; --muted: #9aa69f; --line: #2e3631;
+    --accent: #f0743a; --accent-soft: #3a2116; --map-bg: #e9ebe5;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #141816; --panel: #1a1f1c; --ink: #e6ebe7; --muted: #9aa69f; --line: #2e3631;
+  --accent: #f0743a; --accent-soft: #3a2116; --map-bg: #e9ebe5;
+  color-scheme: dark;
+}
+
+html, body { height: 100%; margin: 0; }
+body {
+  display: flex; background: var(--paper); color: var(--ink);
+  font: 14px/1.45 var(--body);
+}
+#panel {
+  width: 380px; flex-shrink: 0; overflow-y: auto; background: var(--panel);
+  border-right: 1px solid var(--line); padding: 20px 20px 28px;
+  display: flex; flex-direction: column; gap: 22px; box-sizing: border-box;
+}
+#map { flex: 1; min-width: 0; }
+
+h1 { font: 600 24px/1.15 var(--display); margin: 0 0 6px; text-wrap: balance; }
+h2 {
+  font: 600 12px/1 var(--display); text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted); margin: 0 0 10px;
+}
+p { margin: 0; }
+.lede { color: var(--muted); max-width: 65ch; }
+.mono { font-family: var(--mono); font-size: 12px; }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible + .swatch { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.findings { display: flex; flex-direction: column; gap: 8px; padding: 0; margin: 0; list-style: none; }
+.findings li { border-left: 3px solid var(--accent); padding: 2px 0 2px 10px; }
+.findings b { font-weight: 600; }
+
+.parcels { display: flex; flex-direction: column; gap: 8px; }
+.parcel {
+  display: grid; grid-template-columns: 30px 1fr auto; gap: 2px 10px; align-items: start;
+  width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer;
+  background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 10px;
+}
+.parcel:hover { border-color: var(--accent); background: var(--accent-soft); }
+.tag {
+  grid-row: span 3; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent); color: #fff; font: 600 14px/1 var(--display);
+}
+.parcel .acres { font: 600 16px/1.2 var(--display); font-variant-numeric: tabular-nums; }
+.parcel .terms { grid-column: 2 / 4; color: var(--muted); font-size: 12px; }
+.chips { grid-column: 2 / 4; display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.chip {
+  font-size: 11px; line-height: 1; padding: 4px 6px; border-radius: 3px;
+  background: var(--paper); border: 1px solid var(--line); font-variant-numeric: tabular-nums;
+}
+.chip.water { border-color: #6aa3d6; }
+.chip.slope { border-color: #9b7fc6; }
+.chip.trail { border-color: #8a4b1c; }
+
+.layers { display: flex; flex-direction: column; gap: 14px; }
+.layers fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.layers legend { font-size: 12px; color: var(--muted); padding: 0 0 4px; }
+.layers label { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 2px 0; }
+.layers input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.swatch { width: 22px; height: 14px; flex-shrink: 0; border-radius: 2px; box-sizing: border-box; }
+.layers input:not(:checked) + .swatch { opacity: 0.25; }
+.layers input:not(:checked) ~ span:last-child { color: var(--muted); text-decoration: line-through; }
+
+.projects { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.projects li { display: grid; grid-template-columns: 1fr auto; gap: 0 10px; padding: 7px 0; border-top: 1px solid var(--line); }
+.projects .dist { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.projects .meta { color: var(--muted); font-size: 12px; }
+.status { display: inline-block; font-size: 11px; padding: 1px 5px; border-radius: 3px; margin-right: 4px; background: var(--paper); border: 1px solid var(--line); }
+.status.Active { border-color: #2f7d4f; color: #2f7d4f; }
+.status.Hold { border-color: #b7791f; color: #b7791f; }
+
+.notes { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+
+.label-marker {
+  width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  background: #c2410c; color: #fff; font: 600 14px/1 var(--display);
+  border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.35); cursor: pointer;
+}
+.maplibregl-popup-content { font: 12px/1.4 var(--body); color: #1d2420; max-width: 280px; }
+.maplibregl-popup-content h3 { font: 600 13px/1.2 var(--display); margin: 0 0 4px; }
+.maplibregl-popup-content dl { display: grid; grid-template-columns: auto 1fr; gap: 1px 8px; margin: 0; }
+.maplibregl-popup-content dt { color: #5d6862; }
+.maplibregl-popup-content dd { margin: 0; }
+
+@media (max-width: 760px) {
+  body { flex-direction: column-reverse; }
+  #panel { width: auto; height: 55%; border-right: 0; border-top: 1px solid var(--line); padding: 16px; }
+  #map { flex: 1 0 45%; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<aside id="panel">
+  <header>
+    <h1>Blue River Road Surplus Parcels</h1>
+    <p class="lede">Jackson County RFP for the sale of three county-owned parcels on Blue River Road, Kansas City, MO. The map shows the parcels with the trails, floodplain, stream setbacks and city projects around them.</p>
+  </header>
+
+  <section>
+    <h2>What the map shows</h2>
+    <ul class="findings" id="findings"></ul>
+  </section>
+
+  <section>
+    <h2>The three parcels</h2>
+    <div class="parcels" id="parcels"></div>
+  </section>
+
+  <section>
+    <h2>Map layers</h2>
+    <div class="layers" id="layers"></div>
+  </section>
+
+  <section>
+    <h2>City projects within 1.5 km</h2>
+    <ul class="projects" id="projects"></ul>
+  </section>
+
+  <section class="notes">
+    <h2>Sources and limits</h2>
+    <p>Parcels: Jackson County GIS parcel fabric. Parkway, trails, greenway, streams, FEMA flood zones, roads: MARC regional GIS. Stream setbacks, Blue River corridor and capital projects: City of Kansas City, MO.</p>
+    <p>Acreage and percentages are calculated from GIS outlines and are not survey figures. The RFP says parcel 46-830-01-01-01 is to be reconfigured, so its final boundary may differ from the one shown.</p>
+    <p>The stream setback layer comes from the city's regulated-streams buffer and is a planning aid. Setback rules in the city code govern.</p>
+    <p>Data pulled __FETCHED__.</p>
+  </section>
+</aside>
+<div id="map" role="region" aria-label="Map of the RFP parcels"></div>
+
+<script type="application/json" id="bundle">__BUNDLE__</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js"></script>
+<script>
+const D = JSON.parse(document.getElementById("bundle").textContent);
+const RFP_TERMS = {
+  "46-810-02-03-00-0-00-000": "Offered as is",
+  "46-810-02-02-00-0-00-000": "Offered as is",
+  "46-830-01-01-01-0-00-000": "To be reconfigured",
+};
+const C = {
+  site: "#c2410c", parkway: "#4f8a4a", park: "#8fbf7a", trail: "#8a4b1c", greenway: "#2f9e6e",
+  sfha: "#4a8fd1", floodway: "#1f5fa8", x500: "#a9cdee", setback: "#9b7fc6", stream: "#3b7bbf",
+  road: "#ffffff", roadCase: "#a7aca4", parcelLine: "#b9bdb4", corridor: "#2f7d74", cip: "#b7791f",
+};
+
+const esc = (v) => String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const fmtDist = (m) => (m < 1000 ? `${m} m` : `${(m / 1000).toFixed(1)} km`);
+
+// ---- panel ----
+const rows = D.rfp_rows;
+const total = rows.reduce((a, r) => a + r.acres, 0);
+const A = rows.find((r) => r.label === "A");
+document.getElementById("findings").innerHTML = [
+  `<b>All ${total.toFixed(0)} acres sit inside the Blue River Parkway</b>, the county park land along the river as mapped by MARC.`,
+  `<b>Existing trails run through parcel A</b>: ${A.trails.map(esc).join(", ")}. Parcels B and C are within ${Math.max(...rows.filter((r) => r.label !== "A").map((r) => r.trail_m))} m of the Swope Park–Blue River Connector.`,
+  `<b>The city's stream setback layer covers every parcel.</b> Most of it is the steep-slope and mature-vegetation zone; ${A.sfha_pct}% of parcel A is in the FEMA 100-year floodplain.`,
+  `<b>The Blue River Greenway</b> (existing and Phase 1 segments) runs along the river next to the parcels.`,
+].map((t) => `<li>${t}</li>`).join("");
+
+const parcelsEl = document.getElementById("parcels");
+for (const r of rows) {
+  const b = document.createElement("button");
+  b.className = "parcel";
+  b.type = "button";
+  b.innerHTML = `
+    <span class="tag">${r.label}</span>
+    <span class="mono">${esc(r.parcel)}</span>
+    <span class="acres">${r.acres.toFixed(1)} ac</span>
+    <span class="terms">${RFP_TERMS[r.parcel]} · ${fmtDist(r.river_m)} to the Blue River</span>
+    <span class="chips">
+      <span class="chip water">FEMA floodplain ${r.sfha_pct}%</span>
+      <span class="chip slope">Slope/vegetation setback ${r.slope_pct}%</span>
+      <span class="chip trail">${r.trail_m === 0 ? "Trail crosses parcel" : `Trail ${fmtDist(r.trail_m)} away`}</span>
+    </span>`;
+  b.addEventListener("click", () => zoomToParcel(r.parcel));
+  parcelsEl.append(b);
+}
+
+const cip = D.cip.features.map((f) => f.properties);
+document.getElementById("projects").innerHTML = cip.map((p) => `
+  <li>
+    <span>${esc(p.PROJECTNAME)}<br><span class="meta"><span class="status ${esc(p.PROJECTSTATUS)}">${esc(p.PROJECTSTATUS || "Unknown")}</span>${esc(p.dept)}${p.CURRENTPHASE && p.CURRENTPHASE !== p.PROJECTSTATUS ? ` · ${esc(p.CURRENTPHASE)}` : ""}</span></span>
+    <span class="dist">${p.dist_m === 0 ? "on site" : fmtDist(p.dist_m)}</span>
+  </li>`).join("");
+
+// ---- map ----
+const style = {
+  version: 8,
+  sources: Object.fromEntries(
+    ["neighbors", "parks", "parkway", "corridor", "flood", "setbacks", "streams", "roads", "greenway", "trails", "cip", "rfp"]
+      .map((k) => [k, { type: "geojson", data: D[k] }]),
+  ),
+  layers: [
+    { id: "bg", type: "background", paint: { "background-color": "#eef0ea" } },
+    { id: "parks", type: "fill", source: "parks", paint: { "fill-color": C.park, "fill-opacity": 0.35 } },
+    { id: "parkway", type: "fill", source: "parkway", paint: { "fill-color": C.parkway, "fill-opacity": 0.28 } },
+    { id: "parkway-line", type: "line", source: "parkway", paint: { "line-color": C.parkway, "line-width": 1.5 } },
+    { id: "flood-x500", type: "fill", source: "flood", filter: ["==", ["get", "kind"], "x500"], paint: { "fill-color": C.x500, "fill-opacity": 0.45 } },
+    { id: "flood-sfha", type: "fill", source: "flood", filter: ["==", ["get", "kind"], "sfha"], paint: { "fill-color": C.sfha, "fill-opacity": 0.4 } },
+    { id: "flood-floodway", type: "fill", source: "flood", filter: ["==", ["get", "kind"], "floodway"], paint: { "fill-color": C.floodway, "fill-opacity": 0.45 } },
+    { id: "setbacks", type: "fill", source: "setbacks", paint: { "fill-color": C.setback, "fill-opacity": 0.08 } },
+    { id: "setbacks-line", type: "line", source: "setbacks", paint: { "line-color": C.setback, "line-width": 1, "line-dasharray": [2, 2] } },
+    { id: "neighbors", type: "line", source: "neighbors", paint: { "line-color": C.parcelLine, "line-width": 0.6 } },
+    { id: "corridor", type: "line", source: "corridor", paint: { "line-color": C.corridor, "line-width": 1.5, "line-dasharray": [4, 3] } },
+    { id: "streams", type: "line", source: "streams", paint: { "line-color": C.stream, "line-width": ["case", ["in", "Blue River", ["coalesce", ["get", "StreamName"], ""]], 3.5, 1.4] } },
+    { id: "roads-case", type: "line", source: "roads", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": C.roadCase, "line-width": 5 } },
+    { id: "roads", type: "line", source: "roads", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": C.road, "line-width": 3 } },
+    { id: "greenway", type: "line", source: "greenway", layout: { "line-cap": "round" }, paint: { "line-color": C.greenway, "line-width": 9, "line-opacity": 0.35 } },
+    { id: "trails", type: "line", source: "trails", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": C.trail, "line-width": 2.5 } },
+    { id: "rfp-fill", type: "fill", source: "rfp", paint: { "fill-color": C.site, "fill-opacity": 0.22 } },
+    { id: "rfp-line", type: "line", source: "rfp", paint: { "line-color": C.site, "line-width": 3 } },
+    { id: "cip", type: "circle", source: "cip", paint: { "circle-color": C.cip, "circle-radius": 6, "circle-stroke-color": "#fff", "circle-stroke-width": 2 } },
+  ],
+};
+
+const map = new maplibregl.Map({
+  container: "map", style, bounds: D.site_bounds, fitBoundsOptions: { padding: 140 },
+  maxBounds: [[D.bounds[0] - 0.02, D.bounds[1] - 0.02], [D.bounds[2] + 0.02, D.bounds[3] + 0.02]],
+  attributionControl: { compact: true, customAttribution: "Jackson County GIS · MARC · City of Kansas City, MO" },
+});
+map.addControl(new maplibregl.NavigationControl({ showCompass: false }));
+map.addControl(new maplibregl.ScaleControl({ unit: "imperial" }));
+
+for (const l of D.rfp_labels) {
+  const el = document.createElement("div");
+  el.className = "label-marker";
+  el.textContent = l.label;
+  const parcel = rows.find((r) => r.label === l.label).parcel;
+  el.addEventListener("click", (e) => { e.stopPropagation(); zoomToParcel(parcel); });
+  new maplibregl.Marker({ element: el }).setLngLat(l.lnglat).addTo(map);
+}
+
+function boundsOf(geom) {
+  const b = new maplibregl.LngLatBounds();
+  const walk = (c) => (typeof c[0] === "number" ? b.extend(c) : c.forEach(walk));
+  walk(geom.coordinates);
+  return b;
+}
+function zoomToParcel(name) {
+  const f = D.rfp.features.find((x) => x.properties.Name === name);
+  map.fitBounds(boundsOf(f.geometry), { padding: 80, duration: matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 800 });
+}
+
+// ---- layer list ----
+const GROUPS = [
+  ["The site", [
+    ["RFP parcels", ["rfp-fill", "rfp-line"], `background:${C.site}40;border:2px solid ${C.site}`],
+    ["Neighboring parcel lines", ["neighbors"], `border:1px solid ${C.parcelLine}`],
+  ]],
+  ["Parks and trails", [
+    ["Blue River Parkway (county)", ["parkway", "parkway-line"], `background:${C.parkway}55;border:1.5px solid ${C.parkway}`],
+    ["Other parks", ["parks"], `background:${C.park}80`],
+    ["Trails and bikeways", ["trails"], `background:linear-gradient(${C.trail},${C.trail}) center/100% 3px no-repeat`],
+    ["Blue River Greenway", ["greenway"], `background:linear-gradient(${C.greenway}60,${C.greenway}60) center/100% 9px no-repeat`],
+  ]],
+  ["Water and constraints", [
+    ["Blue River and streams", ["streams"], `background:linear-gradient(${C.stream},${C.stream}) center/100% 3px no-repeat`],
+    ["FEMA floodway", ["flood-floodway"], `background:${C.floodway}80`],
+    ["FEMA 100-year floodplain", ["flood-sfha"], `background:${C.sfha}70`],
+    ["FEMA 500-year floodplain", ["flood-x500"], `background:${C.x500}90`],
+    ["City stream setbacks", ["setbacks", "setbacks-line"], `background:${C.setback}30;border:1px dashed ${C.setback}`],
+    ["City Blue River corridor", ["corridor"], `border:1.5px dashed ${C.corridor}`],
+  ]],
+  ["Context", [
+    ["Major roads", ["roads-case", "roads"], `background:#fff;border:1.5px solid ${C.roadCase}`],
+    ["City capital projects", ["cip"], `background:${C.cip};border-radius:50%;width:12px;height:12px;margin:0 5px;border:2px solid #fff;box-shadow:0 0 0 1px ${C.cip}`],
+  ]],
+];
+const layersEl = document.getElementById("layers");
+GROUPS.forEach(([title, items], gi) => {
+  const fs = document.createElement("fieldset");
+  fs.innerHTML = `<legend>${title}</legend>`;
+  items.forEach(([label, ids, swatch], i) => {
+    const id = `layer-${gi}-${i}`;
+    const lab = document.createElement("label");
+    lab.htmlFor = id;
+    lab.innerHTML = `<input type="checkbox" id="${id}" checked><span class="swatch" style="${swatch}"></span><span>${label}</span>`;
+    lab.querySelector("input").addEventListener("change", (e) => {
+      for (const l of ids) map.setLayoutProperty(l, "visibility", e.target.checked ? "visible" : "none");
+    });
+    fs.append(lab);
+  });
+  layersEl.append(fs);
+});
+
+// ---- popups ----
+const POPUP = {
+  "rfp-fill": (p) => [`Parcel ${p.label} (RFP)`, { "Parcel": p.Name, "GIS acres": p.acres, "FEMA floodplain": `${p.sfha_pct}%`, "Slope/vegetation setback": `${p.slope_pct}%`, "Distance to river": fmtDist(p.river_m) }],
+  cip: (p) => [p.PROJECTNAME, { Department: p.dept, Status: p.PROJECTSTATUS, Phase: p.CURRENTPHASE, "From site": p.dist_m === 0 ? "on site" : fmtDist(p.dist_m) }],
+  trails: (p) => [p.RouteName || "Trail", { Type: p.FacilityType, Status: p.Status, Surface: p.Surface, Authority: p.Authority }],
+  greenway: (p) => [p.Name, { Phase: p.Phase, Type: p.Type }],
+  streams: (p) => [p.StreamName || "Unnamed stream", {}],
+  roads: (p) => [p.LABEL || "Road", { Class: p.FCDescription }],
+  setbacks: (p) => ["City stream setback", { Zone: p.ZONE }],
+  "flood-floodway": () => ["FEMA regulatory floodway", {}],
+  "flood-sfha": (p) => ["FEMA 100-year floodplain", { Zone: p.FLD_ZONE }],
+  "flood-x500": () => ["FEMA 500-year floodplain", { Zone: "X (0.2% annual chance)" }],
+  parkway: (p) => [p.Name, { Agency: p.AgencyName, Acres: p.Acres && Math.round(p.Acres) }],
+  parks: (p) => [p.Name, { Agency: p.AgencyName }],
+  corridor: () => ["City Blue River corridor buffer", {}],
+};
+const popup = new maplibregl.Popup({ maxWidth: "300px" });
+map.on("click", (e) => {
+  const hits = map.queryRenderedFeatures(e.point, { layers: Object.keys(POPUP) });
+  if (!hits.length) return popup.remove();
+  const [title, fields] = POPUP[hits[0].layer.id](hits[0].properties);
+  const dl = Object.entries(fields).filter(([, v]) => v !== null && v !== undefined && v !== "")
+    .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
+  popup.setLngLat(e.lngLat).setHTML(`<h3>${esc(title)}</h3>${dl ? `<dl>${dl}</dl>` : ""}`).addTo(map);
+});
+map.on("mousemove", (e) => {
+  const hit = map.queryRenderedFeatures(e.point, { layers: Object.keys(POPUP) }).length;
+  map.getCanvas().style.cursor = hit ? "pointer" : "";
+});
+</script>
+</body>
+</html>

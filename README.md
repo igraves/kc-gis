@@ -37,6 +37,15 @@ In the viewer, the Blue River section has a "Zoom to Blue River Watershed" butto
 
 The city layers appear to be working layers behind a staff web map ([Blue River Projects](https://experience.arcgis.com/experience/da4be96b50014965aeab1fe1406cc18e)), not a formal open-data release. Confirm with the city before republishing them. Private-parcel owner names and addresses, and project contact details, are deliberately not fetched (see `fields` in `sources.toml`).
 
+### Blue River Road surplus parcels (RFP)
+
+Jackson County's RFP to sell parcels 46-810-02-03, 46-810-02-02 and 46-830-01-01-01 on Blue River Road has its own one-page map. It shows the parcels with the parkway, trails, greenway, FEMA flood zones, city stream setbacks and city capital projects within 1.5 km. Each parcel gets its GIS acreage, its floodplain and setback share, and its distance to the nearest trail and to the river. The parcels, neighbouring parcel lines and roads are queried live; everything else comes from `data/`.
+
+```sh
+uv run kcgis fetch $(uv run kcgis list | awk '/^br_/{print $1}') trails_bikeways streams flood_zones parks
+uv run --extra maps python scripts/blue_river_rfp/build.py   # writes maps/blue_river_rfp.html
+```
+
 ## Setup
 
 Requires [uv](https://docs.astral.sh/uv/) and Node 20+.
@@ -115,5 +124,6 @@ src/kcgis/
   staticmap.py        static maps (geopandas/matplotlib)
   cli.py              `kcgis` command
 web/                  Vite + MapLibre viewer
+scripts/blue_river_rfp/  self-contained RFP parcel map (build.py + template.html)
 tests/                pytest suite (no network)
 ```
