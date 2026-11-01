@@ -51,7 +51,7 @@ def fetch_gauges(rings: list[list[list[float]]], session: requests.Session | Non
     A site counts as active if a continuous gage-height or discharge series reported within ACTIVE_WINDOW.
     """
     session = session or requests.Session()
-    session.headers.setdefault("User-Agent", USER_AGENT)
+    session.headers["User-Agent"] = USER_AGENT
     xs = [pt[0] for ring in rings for pt in ring]
     ys = [pt[1] for ring in rings for pt in ring]
     bbox = f"{min(xs)},{min(ys)},{max(xs)},{max(ys)}"

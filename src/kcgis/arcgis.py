@@ -20,7 +20,7 @@ class ArcGISError(RuntimeError):
 class ArcGISClient:
     def __init__(self, session: requests.Session | None = None, retries: int = 3, timeout: int = DEFAULT_TIMEOUT):
         self.session = session or requests.Session()
-        self.session.headers.setdefault("User-Agent", USER_AGENT)
+        self.session.headers["User-Agent"] = USER_AGENT
         self.retries = retries
         self.timeout = timeout
 
