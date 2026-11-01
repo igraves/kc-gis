@@ -8,7 +8,9 @@ from pathlib import Path
 
 from .arcgis import ArcGISClient, ArcGISError, walk_catalog
 from .fetch import DEFAULT_DATA_DIR, Fetcher
+from .osm import OSMError
 from .sources import DEFAULT_REGISTRY, load_registry
+from .usgs import USGSError
 
 
 def cmd_list(args, registry) -> int:
@@ -29,7 +31,7 @@ def cmd_fetch(args, registry) -> int:
         print(f"fetching {layer.name} ({registry.servers[layer.source].title})…")
         try:
             entry = fetcher.fetch(layer)
-        except ArcGISError as exc:
+        except (ArcGISError, OSMError, USGSError) as exc:
             failures += 1
             print(f"  FAILED: {exc}", file=sys.stderr)
             continue

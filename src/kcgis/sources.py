@@ -29,7 +29,8 @@ class Group:
     documents: list[dict[str, str]] = field(default_factory=list)
 
 
-LAYER_KINDS = ("arcgis", "usgs_gauges")
+LAYER_KINDS = ("arcgis", "usgs_gauges", "osm")
+CLIPPED_KINDS = ("usgs_gauges", "osm")  # non-ArcGIS kinds query a bbox, then filter to a clip polygon
 
 
 @dataclass(frozen=True)
@@ -90,8 +91,8 @@ def load_registry(path: Path = DEFAULT_REGISTRY) -> Registry:
             raise ValueError(f"layer {layer.name}: unknown kind {layer.kind!r}")
         if layer.group and layer.group not in reg.groups:
             raise ValueError(f"layer {layer.name}: unknown group {layer.group!r}")
-        if layer.kind == "usgs_gauges" and not layer.clip_layer:
-            raise ValueError(f"layer {layer.name}: usgs_gauges needs clip = \"<polygon layer>\"")
+        if layer.kind in CLIPPED_KINDS and not layer.clip_layer:
+            raise ValueError(f"layer {layer.name}: {layer.kind} needs clip = \"<polygon layer>\"")
         if layer.clip_layer and layer.clip_layer not in reg.layers:
             raise ValueError(f"layer {layer.name}: unknown clip layer {layer.clip_layer!r}")
     for group in reg.groups.values():

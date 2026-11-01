@@ -28,7 +28,7 @@ def test_blue_river_group():
     group = reg.groups["blue_river"]
     assert group.zoom_layer in reg.layers and group.documents
     members = [l for l in reg.layers.values() if l.group == "blue_river"]
-    assert members and all(l.clip_layer in (None, "br_watershed") for l in members)
+    assert members and all(l.clip_layer is None or reg.layers[l.clip_layer].group == "blue_river" for l in members)
     # Private parcel owners must not be requested.
     assert "OWN_NAME" not in reg.layers["br_private_parcels"].fields
 

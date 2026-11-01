@@ -18,6 +18,7 @@ from typing import Any
 
 from .arcgis import ArcGISClient, geojson_to_esri_polygon
 from .sources import PROJECT_ROOT, Layer, Registry
+from .osm import fetch_ways
 from .usgs import fetch_gauges
 
 DEFAULT_DATA_DIR = PROJECT_ROOT / "data"
@@ -82,6 +83,9 @@ class Fetcher:
         if layer.kind == "usgs_gauges":
             rings = self.clip_geometry(layer.clip_layer)["rings"]
             return fetch_gauges(rings, session=self.client.session), {"geometryType": "esriGeometryPoint"}
+        if layer.kind == "osm":
+            rings = self.clip_geometry(layer.clip_layer)["rings"]
+            return fetch_ways(layer.where, rings, session=self.client.session), {"geometryType": "esriGeometryPolyline"}
         info = self.client.info(layer.url)
         features = []
         query = self._query_args(layer)
@@ -125,8 +129,9 @@ class Fetcher:
     def status(self, layer: Layer) -> dict[str, Any]:
         """Compare the remote layer against the last fetch without downloading features."""
         local = self.load_manifest()["layers"].get(layer.name)
-        if layer.kind == "usgs_gauges":
-            return {"layer": layer.name, "state": "live data", "local_count": local and local["count"],
+        if layer.kind != "arcgis":
+            state = "live data" if layer.kind == "usgs_gauges" else "refetch to compare"
+            return {"layer": layer.name, "state": state, "local_count": local and local["count"],
                     "remote_count": None, "fetched_at": local and local["fetched_at"], "source_last_edit": None}
         info = self.client.info(layer.url)
         remote_count = self.client.count(layer.url, **self._query_args(layer))

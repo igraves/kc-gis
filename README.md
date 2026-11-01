@@ -13,6 +13,7 @@ Pulls Jackson County, MO GIS data from public ArcGIS REST services, tracks how i
 | [Mid-America Regional Council (MARC)](https://www.marc.org/data-and-maps) | `https://gis2.marc2.org/arcgis/rest/services` | Regional census, parks, trails, flood zones, transit, facilities, forecasts |
 | [City of Kansas City, MO](https://kcmo.maps.arcgis.com) | `https://services.arcgis.com/4o5uMWTHuOhUVJPd/arcgis/rest/services` | Blue River restoration areas, capital projects, stream setbacks, parcels (ArcGIS Online) |
 | [U.S. Geological Survey](https://waterdata.usgs.gov) | `hydro.nationalmap.gov` (WBD), `api.waterdata.usgs.gov` (gauges) | Watershed boundaries; live stream gauge readings |
+| [OpenStreetMap](https://www.openstreetmap.org/copyright) | `overpass-api.de` (Overpass API) | Volunteer-mapped trails, including the parkway's mountain-bike singletrack |
 
 MARC covers a nine-county region. Its layers are limited to Jackson County either by a `where` filter (for example `CountyFIPS = '29095'`) or by `clip = true`, which keeps only features that intersect the county boundary. Clipping happens on the server.
 
@@ -39,7 +40,7 @@ The city layers appear to be working layers behind a staff web map ([Blue River 
 
 ### Blue River Road surplus parcels (RFP)
 
-Jackson County's RFP to sell parcels 46-810-02-03, 46-810-02-02 and 46-830-01-01-01 on Blue River Road has its own one-page map. It shows the parcels with the parkway, trails, greenway, FEMA flood zones, city stream setbacks and city capital projects within 1.5 km. Each parcel gets its GIS acreage, its floodplain and setback share, and its distance to the nearest trail and to the river. The parcels, neighbouring parcel lines and roads are queried live; everything else comes from `data/`.
+Jackson County's RFP to sell parcels 46-810-02-03, 46-810-02-02 and 46-830-01-01-01 on Blue River Road has its own one-page map. It shows the parcels with the parkway, trails, greenway, FEMA flood zones, city stream setbacks and city capital projects within 1.5 km. Each parcel gets its GIS acreage, its floodplain and setback share, the miles of OpenStreetMap trail on it, and its distance to the river. The parcels, neighbouring parcel lines and roads are queried live; everything else comes from `data/`.
 
 ```sh
 uv run kcgis fetch $(uv run kcgis list | awk '/^br_/{print $1}') trails_bikeways streams flood_zones parks
@@ -101,6 +102,17 @@ Other options:
 - `large`: skips the layer unless it's named.
 - `simplify`: server-side generalization in degrees, for very detailed polygons.
 - `kind = "usgs_gauges"`: fetches active USGS stream gauges inside the `clip` layer.
+- `kind = "osm"`: fetches OpenStreetMap ways matching an Overpass tag selector given in `where` (for example `'["highway"="path"]'`), keeping those with any vertex inside the `clip` layer.
+
+## OpenStreetMap trails
+
+`br_osm_trails` holds the trails OSM volunteers have mapped in the Blue River Parkway: paths, tracks, bridleways and cycleways, plus footways that aren't sidewalks or crossings. Paths marked private are left out. It includes the mountain-bike singletrack, much of which MARC's regional trail layer doesn't show. `mtb:scale` gives OSM's mountain-bike difficulty, from 0 to 6.
+
+OSM features rarely say where they came from, so each feature also carries its last edit: who made it, when, the changeset, and that changeset's `comment`, `source` and `imagery_used` tags. Here those are mostly GPS tracks, the Strava heatmap, aerial imagery and local knowledge.
+
+The data is © OpenStreetMap contributors under the [Open Database License](https://www.openstreetmap.org/copyright). Credit OSM wherever it is shown. If you redistribute a modified copy of the trail data, it must stay under the ODbL.
+
+MTB Project lists the same trails but isn't used: its terms prohibit scraping and redistribution.
 
 ## Tracking changes
 
@@ -119,6 +131,7 @@ sources.toml          layer registry
 src/kcgis/
   arcgis.py           REST client (paging, object-ID fallback, spatial filter)
   usgs.py             USGS Water Data OGC API (active gauges + latest readings)
+  osm.py              OpenStreetMap ways via Overpass, with changeset provenance
   sources.py          registry loader
   fetch.py            fetch + manifest/history + status
   staticmap.py        static maps (geopandas/matplotlib)

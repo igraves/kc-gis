@@ -37,6 +37,11 @@ title = "City of Kansas City, MO"
 root = "https://services.arcgis.com/4o5uMWTHuOhUVJPd/arcgis/rest/services"
 homepage = "https://kcmo.maps.arcgis.com"
 
+[servers.osm]
+title = "OpenStreetMap contributors (ODbL)"
+root = "https://overpass-api.de/api/interpreter"
+homepage = "https://www.openstreetmap.org/copyright"
+
 [servers.usgs]
 title = "U.S. Geological Survey"
 root = "https://hydro.nationalmap.gov/arcgis/rest/services"
@@ -306,6 +311,18 @@ title = "Parkway & Blue River Trails"
 url = "https://gis2.marc2.org/arcgis/rest/services/Recreation/Trails_and_Bikeways/MapServer/0"
 where = "State = 'MO' AND (ParkName = 'Blue River Parkway' OR RouteName LIKE '%Blue River%')"
 color = "#8c510a"
+
+# Trail network mapped by OSM volunteers, including the parkway's singletrack mountain-bike trails.
+# Excludes sidewalks, crossings and private paths. Each feature keeps its last editor and that edit's sources.
+[layers.br_osm_trails]
+source = "osm"
+group = "blue_river"
+kind = "osm"
+title = "Trails & Singletrack (OpenStreetMap)"
+url = "https://overpass-api.de/api/interpreter"
+where = '["highway"~"^(path|track|bridleway|cycleway|footway)$"]["footway"!~"sidewalk|crossing"]["access"!~"^(private|no)$"]'
+clip = "br_parkway"
+color = "#d95f02"
 
 [layers.br_greenway]
 source = "marc"

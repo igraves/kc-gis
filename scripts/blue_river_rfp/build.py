@@ -1,7 +1,7 @@
 """Build maps/blue_river_rfp.html: the Blue River Road surplus-parcel RFP parcels with nearby trails,
 floodplain, stream setbacks and city projects, as one self-contained page.
 
-Needs the blue_river group plus trails_bikeways, streams, flood_zones and parks in data/ (`kcgis fetch`).
+Needs the blue_river group (including br_osm_trails) plus trails_bikeways, streams, flood_zones and parks in data/ (`kcgis fetch`).
 Run from the repo root:  uv run --extra maps python scripts/blue_river_rfp/build.py
 """
 
@@ -56,7 +56,7 @@ def clip(g, cols):
 
 
 def fc(g):
-    return json.loads(g.to_json(drop_id=True))
+    return json.loads(g.to_json(drop_id=True, default=str))  # dates read as Timestamps
 
 
 setbacks = load("br_stream_setbacks")
@@ -65,6 +65,7 @@ out = {}
 
 # RFP parcels with computed metrics
 trails_all = load("trails_bikeways").to_crs(UTM)
+osm_trails = load("br_osm_trails").to_crs(UTM)
 fz = flood.to_crs(UTM)
 sfha = fz[fz.SFHA_TF == "T"].union_all()
 sb = setbacks.to_crs(UTM)
@@ -75,6 +76,7 @@ rows = []
 for i, r in pm.iterrows():
     g = r.geometry
     near_trails = trails_all[trails_all.distance(g) < 150].RouteName.dropna().unique().tolist()
+    on_site = osm_trails[osm_trails.intersects(g)]
     rows.append({
         "label": labels[r.Name],
         "parcel": r.Name,
@@ -85,11 +87,13 @@ for i, r in pm.iterrows():
         "river_m": round(river.distance(g)),
         "trail_m": round(trails_all.distance(g).min()),
         "trails": sorted(near_trails),
+        "osm_trail_mi": round(on_site.intersection(g).length.sum() / 1609.34, 1),
+        "osm_trails": sorted(on_site.name.dropna().unique()),
     })
 p = parcels.copy()
-for k in ("label", "acres", "sfha_pct", "slope_pct", "setback_pct", "river_m", "trail_m"):
+for k in ("label", "acres", "sfha_pct", "slope_pct", "setback_pct", "river_m", "trail_m", "osm_trail_mi"):
     p[k] = [row[k] for row in rows]
-out["rfp"] = fc(p[["Name", "label", "acres", "sfha_pct", "slope_pct", "setback_pct", "river_m", "trail_m", "geometry"]])
+out["rfp"] = fc(p[["Name", "label", "acres", "sfha_pct", "slope_pct", "setback_pct", "river_m", "trail_m", "osm_trail_mi", "geometry"]])
 out["rfp_rows"] = sorted(rows, key=lambda r: r["label"])
 out["rfp_labels"] = [
     {"label": r["label"], "lnglat": list(gpd.GeoSeries([g], crs=UTM).to_crs(4326).iloc[0].representative_point().coords[0])}
@@ -105,6 +109,9 @@ out["flood"] = fc(fl[fl.kind != "other"])
 out["setbacks"] = fc(clip(setbacks, ["ZONE"]))
 out["streams"] = fc(clip(load("streams"), ["StreamName"]))
 out["trails"] = fc(clip(load("trails_bikeways"), ["RouteName", "Status", "FacilityType", "Surface", "Authority"]))
+out["osm_trails"] = fc(clip(load("br_osm_trails"), [
+    "name", "highway", "surface", "mtb:scale", "oneway", "last_edited", "last_editor",
+    "changeset_source", "changeset_imagery", "url"]))
 out["greenway"] = fc(clip(load("br_greenway"), ["Name", "Phase", "Type"]))
 out["corridor"] = fc(clip(load("br_corridor_buffer"), []))
 
@@ -144,4 +151,4 @@ OUT.parent.mkdir(exist_ok=True)
 OUT.write_text(html)
 print(f"wrote {OUT} ({len(html) / 1e6:.1f} MB)")
 for r in out["rfp_rows"]:
-    print(f"  {r['label']} {r['parcel']} {r['acres']} ac, floodplain {r['sfha_pct']}%, trail {r['trail_m']} m")
+    print(f"  {r['label']} {r['parcel']} {r['acres']} ac, floodplain {r['sfha_pct']}%, MARC trail {r['trail_m']} m, OSM trails on site {r['osm_trail_mi']} mi")

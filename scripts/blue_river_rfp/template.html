@@ -72,7 +72,7 @@ a:focus-visible, button:focus-visible, input:focus-visible + .swatch { outline: 
 }
 .parcel:hover { border-color: var(--accent); background: var(--accent-soft); }
 .tag {
-  grid-row: span 3; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  grid-row: span 4; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
   background: var(--accent); color: #fff; font: 600 14px/1 var(--display);
 }
 .parcel .acres { font: 600 16px/1.2 var(--display); font-variant-numeric: tabular-nums; }
@@ -154,6 +154,7 @@ a:focus-visible, button:focus-visible, input:focus-visible + .swatch { outline: 
   <section class="notes">
     <h2>Sources and limits</h2>
     <p>Parcels: Jackson County GIS parcel fabric. Parkway, trails, greenway, streams, FEMA flood zones, roads: MARC regional GIS. Stream setbacks, Blue River corridor and capital projects: City of Kansas City, MO.</p>
+    <p>Trails and singletrack: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, ODbL. Volunteers mapped them from GPS tracks, aerial imagery and local knowledge; each trail's popup shows who last edited it and what they mapped from.</p>
     <p>Acreage and percentages are calculated from GIS outlines and are not survey figures. The RFP says parcel 46-830-01-01-01 is to be reconfigured, so its final boundary may differ from the one shown.</p>
     <p>The stream setback layer comes from the city's regulated-streams buffer and is a planning aid. Setback rules in the city code govern.</p>
     <p>Data pulled __FETCHED__.</p>
@@ -173,7 +174,7 @@ const RFP_TERMS = {
 const C = {
   site: "#c2410c", parkway: "#4f8a4a", park: "#8fbf7a", trail: "#8a4b1c", greenway: "#2f9e6e",
   sfha: "#4a8fd1", floodway: "#1f5fa8", x500: "#a9cdee", setback: "#9b7fc6", stream: "#3b7bbf",
-  road: "#ffffff", roadCase: "#a7aca4", parcelLine: "#b9bdb4", corridor: "#2f7d74", cip: "#b7791f",
+  road: "#ffffff", singletrack: "#1f2421", roadCase: "#a7aca4", parcelLine: "#b9bdb4", corridor: "#2f7d74", cip: "#b7791f",
 };
 
 const esc = (v) => String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -183,9 +184,10 @@ const fmtDist = (m) => (m < 1000 ? `${m} m` : `${(m / 1000).toFixed(1)} km`);
 const rows = D.rfp_rows;
 const total = rows.reduce((a, r) => a + r.acres, 0);
 const A = rows.find((r) => r.label === "A");
+const osmMiles = rows.reduce((a, r) => a + r.osm_trail_mi, 0);
 document.getElementById("findings").innerHTML = [
   `<b>All ${total.toFixed(0)} acres sit inside the Blue River Parkway</b>, the county park land along the river as mapped by MARC.`,
-  `<b>Existing trails run through parcel A</b>: ${A.trails.map(esc).join(", ")}. Parcels B and C are within ${Math.max(...rows.filter((r) => r.label !== "A").map((r) => r.trail_m))} m of the Swope Park–Blue River Connector.`,
+  `<b>About ${osmMiles.toFixed(1)} miles of trail cross the three parcels</b>, as mapped in OpenStreetMap, mostly singletrack in the Wudchuck system. MARC's regional trail layer shows only the official trails here, which cross parcel A alone.`,
   `<b>The city's stream setback layer covers every parcel.</b> Most of it is the steep-slope and mature-vegetation zone; ${A.sfha_pct}% of parcel A is in the FEMA 100-year floodplain.`,
   `<b>The Blue River Greenway</b> (existing and Phase 1 segments) runs along the river next to the parcels.`,
 ].map((t) => `<li>${t}</li>`).join("");
@@ -200,10 +202,11 @@ for (const r of rows) {
     <span class="mono">${esc(r.parcel)}</span>
     <span class="acres">${r.acres.toFixed(1)} ac</span>
     <span class="terms">${RFP_TERMS[r.parcel]} · ${fmtDist(r.river_m)} to the Blue River</span>
+    <span class="terms">Trails: ${r.osm_trails.map(esc).join(", ")}</span>
     <span class="chips">
       <span class="chip water">FEMA floodplain ${r.sfha_pct}%</span>
       <span class="chip slope">Slope/vegetation setback ${r.slope_pct}%</span>
-      <span class="chip trail">${r.trail_m === 0 ? "Trail crosses parcel" : `Trail ${fmtDist(r.trail_m)} away`}</span>
+      <span class="chip trail">${r.osm_trail_mi} mi of trail on parcel</span>
     </span>`;
   b.addEventListener("click", () => zoomToParcel(r.parcel));
   parcelsEl.append(b);
@@ -220,7 +223,7 @@ document.getElementById("projects").innerHTML = cip.map((p) => `
 const style = {
   version: 8,
   sources: Object.fromEntries(
-    ["neighbors", "parks", "parkway", "corridor", "flood", "setbacks", "streams", "roads", "greenway", "trails", "cip", "rfp"]
+    ["neighbors", "parks", "parkway", "corridor", "flood", "setbacks", "streams", "roads", "greenway", "trails", "osm_trails", "cip", "rfp"]
       .map((k) => [k, { type: "geojson", data: D[k] }]),
   ),
   layers: [
@@ -240,6 +243,8 @@ const style = {
     { id: "roads", type: "line", source: "roads", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": C.road, "line-width": 3 } },
     { id: "greenway", type: "line", source: "greenway", layout: { "line-cap": "round" }, paint: { "line-color": C.greenway, "line-width": 9, "line-opacity": 0.35 } },
     { id: "trails", type: "line", source: "trails", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": C.trail, "line-width": 2.5 } },
+    { id: "osm-trails", type: "line", source: "osm_trails", filter: ["!=", ["get", "highway"], "path"], layout: { "line-join": "round" }, paint: { "line-color": C.singletrack, "line-width": 1.6 } },
+    { id: "osm-paths", type: "line", source: "osm_trails", filter: ["==", ["get", "highway"], "path"], layout: { "line-join": "round" }, paint: { "line-color": C.singletrack, "line-width": 1.6, "line-dasharray": [2, 1.2] } },
     { id: "rfp-fill", type: "fill", source: "rfp", paint: { "fill-color": C.site, "fill-opacity": 0.22 } },
     { id: "rfp-line", type: "line", source: "rfp", paint: { "line-color": C.site, "line-width": 3 } },
     { id: "cip", type: "circle", source: "cip", paint: { "circle-color": C.cip, "circle-radius": 6, "circle-stroke-color": "#fff", "circle-stroke-width": 2 } },
@@ -249,7 +254,7 @@ const style = {
 const map = new maplibregl.Map({
   container: "map", style, bounds: D.site_bounds, fitBoundsOptions: { padding: 140 },
   maxBounds: [[D.bounds[0] - 0.02, D.bounds[1] - 0.02], [D.bounds[2] + 0.02, D.bounds[3] + 0.02]],
-  attributionControl: { compact: true, customAttribution: "Jackson County GIS · MARC · City of Kansas City, MO" },
+  attributionControl: { compact: true, customAttribution: "Jackson County GIS · MARC · City of Kansas City, MO · © OpenStreetMap contributors" },
 });
 map.addControl(new maplibregl.NavigationControl({ showCompass: false }));
 map.addControl(new maplibregl.ScaleControl({ unit: "imperial" }));
@@ -284,6 +289,7 @@ const GROUPS = [
     ["Blue River Parkway (county)", ["parkway", "parkway-line"], `background:${C.parkway}55;border:1.5px solid ${C.parkway}`],
     ["Other parks", ["parks"], `background:${C.park}80`],
     ["Trails and bikeways", ["trails"], `background:linear-gradient(${C.trail},${C.trail}) center/100% 3px no-repeat`],
+    ["Trails & singletrack (OpenStreetMap)", ["osm-trails", "osm-paths"], `background:repeating-linear-gradient(90deg,${C.singletrack} 0 5px,transparent 5px 8px) center/100% 2px no-repeat`],
     ["Blue River Greenway", ["greenway"], `background:linear-gradient(${C.greenway}60,${C.greenway}60) center/100% 9px no-repeat`],
   ]],
   ["Water and constraints", [
@@ -318,9 +324,15 @@ GROUPS.forEach(([title, items], gi) => {
 
 // ---- popups ----
 const POPUP = {
-  "rfp-fill": (p) => [`Parcel ${p.label} (RFP)`, { "Parcel": p.Name, "GIS acres": p.acres, "FEMA floodplain": `${p.sfha_pct}%`, "Slope/vegetation setback": `${p.slope_pct}%`, "Distance to river": fmtDist(p.river_m) }],
+  "rfp-fill": (p) => [`Parcel ${p.label} (RFP)`, { "Parcel": p.Name, "GIS acres": p.acres, "FEMA floodplain": `${p.sfha_pct}%`, "Slope/vegetation setback": `${p.slope_pct}%`, "Distance to river": fmtDist(p.river_m), "Trail on parcel (OSM)": `${p.osm_trail_mi} mi` }],
   cip: (p) => [p.PROJECTNAME, { Department: p.dept, Status: p.PROJECTSTATUS, Phase: p.CURRENTPHASE, "From site": p.dist_m === 0 ? "on site" : fmtDist(p.dist_m) }],
   trails: (p) => [p.RouteName || "Trail", { Type: p.FacilityType, Status: p.Status, Surface: p.Surface, Authority: p.Authority }],
+  "osm-trails": (p) => [p.name || "Unnamed trail", {
+    Type: p.highway, "MTB difficulty (0–6)": p["mtb:scale"], Surface: p.surface, "One way": p.oneway,
+    "Last edited": p.last_edited && `${p.last_edited.slice(0, 10)} by ${p.last_editor}`,
+    "Mapped from": [p.changeset_source, p.changeset_imagery].filter(Boolean).join("; "),
+    "OSM way": p.url }],
+  "osm-paths": (p) => POPUP["osm-trails"](p),
   greenway: (p) => [p.Name, { Phase: p.Phase, Type: p.Type }],
   streams: (p) => [p.StreamName || "Unnamed stream", {}],
   roads: (p) => [p.LABEL || "Road", { Class: p.FCDescription }],
@@ -338,7 +350,7 @@ map.on("click", (e) => {
   if (!hits.length) return popup.remove();
   const [title, fields] = POPUP[hits[0].layer.id](hits[0].properties);
   const dl = Object.entries(fields).filter(([, v]) => v !== null && v !== undefined && v !== "")
-    .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
+    .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${/^https:\/\//.test(v) ? `<a href="${esc(v)}">${esc(v.replace("https://www.", ""))}</a>` : esc(v)}</dd>`).join("");
   popup.setLngLat(e.lngLat).setHTML(`<h3>${esc(title)}</h3>${dl ? `<dl>${dl}</dl>` : ""}`).addTo(map);
 });
 map.on("mousemove", (e) => {
